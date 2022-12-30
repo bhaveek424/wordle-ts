@@ -64,3 +64,21 @@ describe("scoreGuess", () => {
  abcb, zbxb - ICII
  abcb, bzbx - AIII
  */
+
+describe("validateGuess", () => {
+  let game: Wrdl.Game;
+
+  beforeEach(() => {
+    const dictionary = ["aaaa", "aabb", "bbaa", "bbbb", "bbba", "aaab"];
+    const answer = "aaab";
+    game = Wrdl.createGame(dictionary, answer, false);
+  });
+
+  it("accepts words that ARE in the dictionary", () => {
+    expect(Wrdl.validateGuess("aaaa", game)).toEqual(true);
+  });
+
+  it("reject words that ARE NOT in the dictionary", () => {
+    expect(Wrdl.validateGuess("cccc", game)).toEqual(false);
+  });
+});
