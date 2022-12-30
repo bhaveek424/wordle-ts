@@ -13,6 +13,14 @@ describe("scoreGuess", () => {
     expect(Wrdl.scoreGuess("bx", "ab")).toEqual(["A", "I"]);
   });
 
+  it("matches letters only once", () => {
+    expect(Wrdl.scoreGuess("cczy", "abcd")).toEqual(["A", "I", "I", "I"]);
+  });
+
+  it("matches correct letters first", () => {
+    expect(Wrdl.scoreGuess("zdyd", "abcd")).toEqual(["I", "I", "I", "C"]);
+  });
+
   // it each block
   it.each([
     // guess, answer, result
@@ -30,8 +38,8 @@ describe("scoreGuess", () => {
     ["zbyb", "abcb", "ICIC"],
 
     // dupe in answer, no dupe in guess
-    ["zbxb", "abcb", "ICII"],
-    ["bzbx", "abcb", "AIII"],
+    ["zbxy", "abcb", "ICII"],
+    ["bzyx", "abcb", "AIII"],
   ])("guess: %s, answer: %s, result: %s", (guess, answer, result) => {
     expect(Wrdl.scoreGuess(guess, answer)).toEqual(result.split(""));
   });
