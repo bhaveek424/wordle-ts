@@ -81,4 +81,29 @@ describe("validateGuess", () => {
   it("reject words that ARE NOT in the dictionary", () => {
     expect(Wrdl.validateGuess("cccc", game)).toEqual(false);
   });
+
+  it("reject words that have already been guessed", () => {
+    game.guesses.push("aaaa");
+    expect(Wrdl.validateGuess("aaaa", game)).toEqual(false);
+  });
+
+  it("accepts words that do not use CORRECT in EASY mode", () => {
+    game.guesses.push("aabb");
+    game.scores.push(Wrdl.scoreGuess("aabb", game.answer));
+    expect(Wrdl.validateGuess("bbaa", game)).toEqual(true);
+  });
+
+  it("reject words that donot use CORRECT leters in HARD mode", () => {
+    game.guesses.push("aabb");
+    game.scores.push(Wrdl.scoreGuess("aabb", game.answer));
+    game.hardMode = true;
+    expect(Wrdl.validateGuess("bbaa", game)).toEqual(false);
+  });
+
+  it("reject words that donot use ALMOST leters in HARD mode", () => {
+    game.guesses.push("bbba");
+    game.scores.push(Wrdl.scoreGuess("bbba", game.answer));
+    game.hardMode = true;
+    expect(Wrdl.validateGuess("aaaa", game)).toEqual(false);
+  });
 });
