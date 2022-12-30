@@ -1,97 +1,103 @@
-export const CORRECT = "C";
-export const ALMOST = "A";
-export const INCORRECT = "I";
+import words from "./words";
 
-export type LetterScore = typeof CORRECT | typeof INCORRECT | typeof ALMOST;
-export type GuessScore = LetterScore[];
+type LetterScore = "I" | "A" | "C";
+export type WordScore = LetterScore[];
+
+const INCORRECT: LetterScore = "I";
+const ALMOST: LetterScore = "A";
+const CORRECT: LetterScore = "C";
 
 export type Game = {
+  dictionary: string[];
   answer: string;
   hardMode: boolean;
+  guessesRemaining: number;
   guesses: string[];
-  scores: GuessScore[];
-  guessRemaining: number;
-  dictionary: string[];
+  scores: WordScore[];
   maxWordLength: number;
 };
 
+const getRandomInt = (min: number, max: number) =>
+  Math.floor(Math.random() * (max - min + 1)) + min;
+
+export const getWord = () => words[getRandomInt(0, words.length - 1)];
+
+export const scoreGuess = (guess: string, answer: string): WordScore => {
+  const guessLetters = guess.split("");
+  const answerLetters = answer.split("");
+
+  const score: WordScore = [];
+
+  guessLetters.forEach((letter, idx) => {
+    if (letter !== answerLetters[idx]) return;
+    score[idx] = CORRECT;
+    answerLetters[idx] = "";
+    guessLetters[idx] = "";
+  });
+
+  guessLetters.forEach((letter, idx) => {
+    if (letter === "") return;
+    if (!answerLetters.includes(letter)) {
+      score[idx] = INCORRECT;
+    } else {
+      score[idx] = ALMOST;
+      const answerIdx = answerLetters.findIndex((char) => char === letter);
+      answerLetters[answerIdx] = "";
+    }
+  });
+  return score;
+};
+
 export const createGame = (
-  dictionary: string[],
-  answer: string,
-  hardMode: false
+  dictionary: string[] = words,
+  answer: string = getWord(),
+  hardMode = false
 ): Game => {
   return {
+    dictionary,
     answer,
     hardMode,
+    guessesRemaining: 6,
     guesses: [],
     scores: [],
-    guessRemaining: 6,
-    dictionary,
     maxWordLength: 4,
   };
 };
 
-const EMPTY = "";
-
-export const scoreGuess = (guess: string, answer: string): GuessScore => {
-  const answerLetters = answer.split("");
-  const guessLetters = guess.split("");
-
-  const score: GuessScore = [];
-
-  for (let i = 0; i < guessLetters.length; i++) {
-    if (guessLetters[i] === answerLetters[i]) {
-      score[i] = CORRECT;
-      answerLetters[i] = EMPTY;
-      guessLetters[i] = EMPTY;
-    }
+export const makeGuess = (guess: string, game: Game): Game => {
+  if (!isValidGuess(guess, game)) {
+    throw new Error(guess + " is an invalid guess");
   }
 
-  for (let i = 0; i < guessLetters.length; i++) {
-    if (guessLetters[i] === EMPTY) continue;
-
-    const answerIdx = answerLetters.findIndex(
-      (char) => char === guessLetters[i]
-    );
-    if (answerIdx > -1) {
-      score[i] = ALMOST;
-      answerLetters[answerIdx] = EMPTY;
-    } else {
-      score[i] = INCORRECT;
-    }
-  }
-
-  return score;
+  return {
+    ...game,
+    guessesRemaining:
+      game.answer === guess
+        ? 0
+        : game.guessesRemaining === 0
+        ? 0
+        : game.guessesRemaining - 1,
+    guesses: game.guesses.concat([guess]),
+    scores: game.scores.concat([scoreGuess(guess, game.answer)]),
+  };
 };
 
-export const validateGuess = (guess: string, game: Game) => {
+export const isValidGuess = (guess: string, game: Game): boolean => {
   if (!game.dictionary.includes(guess)) return false;
   if (game.guesses.includes(guess)) return false;
 
-  if (game.guesses.length && game.hardMode) {
-    const lastGuess = game.guesses[game.guesses.length - 1];
-    const lastScore = game.scores[game.scores.length - 1];
-
-    for (let i = 0; i < guess.length; i++) {
-      if (lastScore[i] === CORRECT && lastGuess[i] !== guess[i]) return false;
-
-      if (lastScore[i] === ALMOST && guess.includes(lastGuess[i])) return false;
-      return false;
+  const lastGuess = game.guesses[game.guesses.length - 1];
+  const lastScore = game.scores[game.scores.length - 1];
+  if (game.hardMode && lastScore) {
+    for (let i = 0; i < lastScore.length; i++) {
+      if (lastScore[i] === CORRECT && guess[i] !== lastGuess[i]) {
+        return false;
+      }
+      if (lastScore[i] === ALMOST && !guess.includes(lastGuess[i])) {
+        return false;
+      }
     }
   }
-  return true;
-};
 
-export const makeGuess = (guess: string, game: Game): Game => {
-  return {
-    ...game,
-    guesses: game.guesses.concat([guess]),
-    scores: game.scores.concat([scoreGuess(guess, game.answer)]),
-    guessRemaining:
-      guess === game.answer
-        ? 0
-        : game.guessRemaining === 0
-        ? 0
-        : game.guessRemaining - 1,
-  };
+  return true;
 };

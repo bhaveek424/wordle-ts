@@ -1,106 +1,69 @@
 import * as Wrdl from "./wrdl";
 
-describe("scoreGuess", () => {
+describe("checkGuess", () => {
   it("identifies correct letters", () => {
     expect(Wrdl.scoreGuess("a", "a")).toEqual(["C"]);
   });
 
   it("identifies incorrect letters", () => {
-    expect(Wrdl.scoreGuess("b", "a")).toEqual(["I"]);
+    expect(Wrdl.scoreGuess("a", "b")).toEqual(["I"]);
   });
 
   it("identifies almost letters", () => {
-    expect(Wrdl.scoreGuess("bx", "ab")).toEqual(["A", "I"]);
+    expect(Wrdl.scoreGuess("ab", "bc")).toEqual(["I", "A"]);
   });
 
-  it("matches letters only once", () => {
-    expect(Wrdl.scoreGuess("cczy", "abcd")).toEqual(["A", "I", "I", "I"]);
+  it("identifies a duplicate guess letter as wrong", () => {
+    expect(Wrdl.scoreGuess("bob", "bco")).toEqual(["C", "A", "I"]);
   });
 
-  it("matches correct letters first", () => {
-    expect(Wrdl.scoreGuess("zdyd", "abcd")).toEqual(["I", "I", "I", "C"]);
+  it("identifies a duplicate guess letter as almost", () => {
+    expect(Wrdl.scoreGuess("bob", "bbo")).toEqual(["C", "A", "A"]);
   });
-
-  // it each block
-  it.each([
-    // guess, answer, result
-    // no dupe in answer, dupe in guess
-    ["xyzz", "abcd", "IIII"],
-    ["cczy", "abcd", "AIII"],
-    ["aazy", "abcd", "CIII"],
-    ["zdyd", "abcd", "IIIC"],
-
-    //  dupe in answer, dupe in guess
-    ["zzyz", "abcb", "IIII"],
-    ["bzby", "abcb", "AIAI"],
-    ["zbby", "abcb", "ICAI"],
-    ["zybb", "abcb", "IIAC"],
-    ["zbyb", "abcb", "ICIC"],
-
-    // dupe in answer, no dupe in guess
-    ["zbxy", "abcb", "ICII"],
-    ["bzyx", "abcb", "AIII"],
-  ])("guess: %s, answer: %s, result: %s", (guess, answer, result) => {
-    expect(Wrdl.scoreGuess(guess, answer)).toEqual(result.split(""));
+  it("identifies a duplicate guess letter as correct", () => {
+    expect(Wrdl.scoreGuess("bob", "bob")).toEqual(["C", "C", "C"]);
+  });
+  it("wat", () => {
+    expect(Wrdl.scoreGuess("bbba", "aaab")).toEqual(["A", "I", "I", "A"]);
   });
 });
 
-/*
- answer, guess - result 
- no dupe in answer, dupe in guess
- abcd, xyzz - IIII
- abcd, cczy - AIII
- abcd, aazy - CIII
- abcd, zdyd - IIIC
+describe("isValidGuess", () => {
+  // - in dictionary
+  // - not already used
+  // - matches already known info, if in hard mode
 
- dupe in answer, dupe in guess
- abcb, zzyz - IIII
- abcb, bzby - AIAI
- abcb, zbby - ICAI
- abcb, zybb - IIAC
- abcb, zbyb - ICIC
-
- dupe in answer, no dupe in guess
- abcb, zbxb - ICII
- abcb, bzbx - AIII
- */
-
-describe("validateGuess", () => {
   let game: Wrdl.Game;
 
   beforeEach(() => {
-    const dictionary = ["aaaa", "aabb", "bbaa", "bbbb", "bbba", "aaab"];
-    const answer = "aaab";
-    game = Wrdl.createGame(dictionary, answer, false);
+    game = Wrdl.createGame(
+      ["aaaa", "aabb", "bbaa", "bbbb", "bbba", "aaab"],
+      "aaab"
+    );
   });
 
-  it("accepts words that ARE in the dictionary", () => {
-    expect(Wrdl.validateGuess("aaaa", game)).toEqual(true);
+  it("accepts guesses that are in the dictionary", () => {
+    expect(Wrdl.isValidGuess("bbbb", game)).toBeTruthy();
   });
-
-  it("reject words that ARE NOT in the dictionary", () => {
-    expect(Wrdl.validateGuess("cccc", game)).toEqual(false);
+  it("rejects guesses that are NOT in the dictionary", () => {
+    expect(Wrdl.isValidGuess("cccc", game)).toBeFalsy();
   });
-
-  it("reject words that have already been guessed", () => {
+  it("rejects guesses that are already used", () => {
     game = Wrdl.makeGuess("aaaa", game);
-    expect(Wrdl.validateGuess("aaaa", game)).toEqual(false);
+    expect(Wrdl.isValidGuess("aaaa", game)).toBeFalsy();
   });
-
-  it("accepts words that do not use CORRECT in EASY mode", () => {
+  it("accepts guesses that do not match existing correct letters in easy mode", () => {
     game = Wrdl.makeGuess("aabb", game);
-    expect(Wrdl.validateGuess("bbaa", game)).toEqual(true);
+    expect(Wrdl.isValidGuess("bbaa", game)).toBeTruthy();
   });
-
-  it("reject words that donot use CORRECT leters in HARD mode", () => {
+  it("rejects guesses that do not match existing correct letters in hard mode", () => {
     game = Wrdl.makeGuess("aabb", game);
     game.hardMode = true;
-    expect(Wrdl.validateGuess("bbaa", game)).toEqual(false);
+    expect(Wrdl.isValidGuess("bbaa", game)).toBeFalsy();
   });
-
-  it("reject words that donot use ALMOST leters in HARD mode", () => {
+  it("rejects guesses that do not include existing almost letters in hard mode", () => {
     game = Wrdl.makeGuess("bbba", game);
     game.hardMode = true;
-    expect(Wrdl.validateGuess("aaaa", game)).toEqual(false);
+    expect(Wrdl.isValidGuess("aaaa", game)).toBeFalsy();
   });
 });
