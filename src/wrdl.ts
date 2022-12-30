@@ -5,6 +5,32 @@ export const INCORRECT = "I";
 export type LetterScore = typeof CORRECT | typeof INCORRECT | typeof ALMOST;
 export type GuessScore = LetterScore[];
 
+export type Game = {
+  answer: string;
+  hardMode: boolean;
+  guesses: string[];
+  scores: GuessScore[];
+  guessRemaining: number;
+  dictionary: string[];
+  maxWordLength: number;
+};
+
+export const createGame = (
+  dictionary: string[],
+  answer: string,
+  hardMode: false
+): Game => {
+  return {
+    answer,
+    hardMode,
+    guesses: [],
+    scores: [],
+    guessRemaining: 6,
+    dictionary,
+    maxWordLength: 4,
+  };
+};
+
 const EMPTY = "";
 
 export const scoreGuess = (guess: string, answer: string): GuessScore => {
